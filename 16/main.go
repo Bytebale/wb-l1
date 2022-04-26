@@ -6,14 +6,6 @@ import (
 	"time"
 )
 
-func main() {
-
-	slice := generateSlice(20)
-	fmt.Println("\n--- Unsorted --- \n\n", slice)
-	quicksort(slice)
-	fmt.Println("\n--- Sorted ---\n\n", slice)
-}
-
 // Generates a slice of size, size filled with random numbers
 func generateSlice(size int) []int {
 
@@ -49,4 +41,12 @@ func quicksort(a []int) []int {
 	quicksort(a[left+1:])
 
 	return a
+}
+
+func main() {
+
+	slice := generateSlice(10)
+	fmt.Println("\n--- Unsorted --- \n\n", slice)
+	quicksort(slice)
+	fmt.Println("\n--- Sorted ---\n\n", slice)
 }
