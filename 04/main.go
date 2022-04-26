@@ -5,33 +5,37 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 )
 
-func work(ch chan interface{}, wg *sync.WaitGroup, n int) {
+func work(ch chan interface{}, cancel chan struct{}, n int) {
 	for data := range ch {
-		time.Sleep(200 * time.Millisecond)
-		fmt.Printf("Worker No: %d made %v\n", n, data)
+		select {
+		case <-ch:
+			fmt.Printf("Worker No: %d made %v\n", n, data)
+			time.Sleep(200 * time.Millisecond)
+		case <-cancel:
+			return
+		}
 	}
-	wg.Done()
 }
 
 func main() {
 	task := [...]interface{}{1, 'a', "bb", "ccc"}
 	mainCh := make(chan interface{})
+	cancel := make(chan struct{})
 	sigChan := make(chan os.Signal, 1)
+
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
 	rand.Seed(time.Now().UnixNano())
 	fmt.Println("Select number of workers: ")
 	var n int
 	fmt.Scan(&n)
-	wg := &sync.WaitGroup{}
 
 	for n != 0 {
-		wg.Add(1)
-		go work(mainCh, wg, n)
+		go work(mainCh, cancel, n)
 		n--
 	}
 
@@ -40,7 +44,8 @@ func main() {
 		default:
 			mainCh <- task[rand.Intn(len(task))]
 		case <-sigChan:
-			close(mainCh)
+			close(cancel)
+			fmt.Println("finish work")
 			return
 		}
 	}
